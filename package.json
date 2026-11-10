@@ -1,0 +1,8 @@
+{
+  "name": "mimosa-monitor-web",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Buildless Mimosa science project browser prototype",
+  "scripts": {"test": "node --test tests/core.test.cjs"},
+  "engines": {"node": ">=18"}
+}

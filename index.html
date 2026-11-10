@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="Mimosa Monitor: a plant-care and electrical-recording science project. Try the clearly labelled simulation before connecting sensors.">
+        <meta name="theme-color" content="#173c35">
+        <title>Mimosa Monitor</title>
+        <link rel="icon" href="icon.svg" type="image/svg+xml">
+        <link rel="stylesheet" href="styles.css">
+        <script defer src="core.js"></script>
+        <script defer src="app.js"></script>
+    </head>
+    <body>
+        <a class="skip" href="#main">Skip to dashboard</a>
+        <header class="topbar">
+            <a class="brand" href="./" aria-label="Mimosa Monitor home">
+                <svg viewBox="0 0 36 36" aria-hidden="true">
+                    <path d="M18 30V8M18 19C8 19 6 13 5 9c7 0 13 2 13 10Zm0-5C27 14 29 9 30 5c-7 0-12 2-12 9Zm0 12c-8 0-11-4-12-7 7-1 12 1 12 7Zm0-4c8 0 11-4 12-7-7-1-12 1-12 7Z"/>
+                </svg>
+                <span>
+                    Mimosa<span class="brand-light"> Monitor</span>
+                </span>
+            </a>
+            <span class="top-caption">A little closer to your plant.</span>
+            <div class="top-actions">
+                <span id="sourceBadge" class="badge badge-demo">SIMULATED DATA</span>
+                <button class="icon-button" id="helpButton" aria-label="How to use Mimosa Monitor">?</button>
+            </div>
+        </header>
+        <main id="main" class="shell">
+            <section class="intro" aria-labelledby="pageTitle">
+                <div>
+                    <p class="eyebrow">YOUR PLANT OBSERVATORY</p>
+                    <h1 id="pageTitle">Your plant, in focus.</h1>
+                    <p class="intro-copy">Follow the moisture. Explore the signals. Keep a record.</p>
+                </div>
+                <div class="plant-card">
+                    <div class="plant-avatar" aria-hidden="true">✳</div>
+                    <div>
+                        <span class="tiny-label">MONITORING</span>
+                        <strong id="plantDisplay">Mimosa</strong>
+                        <span class="muted">One plant. One session at a time.</span>
+                    </div>
+                    <button class="text-button" id="settingsButton">Settings</button>
+                </div>
+            </section>
+            <section class="connection-bar" aria-label="Connection and recording controls">
+                <div class="connection-state">
+                    <span class="status-dot" id="statusDot"></span>
+                    <div>
+                        <strong id="connectionStatus">Starting demo…</strong>
+                        <span id="connectionDetail">Artificial readings · target 20 samples/second</span>
+                    </div>
+                </div>
+                <div class="connection-actions">
+                    <button class="button quiet" id="demoButton">Restart demo</button>
+                    <button class="button quiet" id="usbButton">Connect USB</button>
+                    <button class="button outline" id="stopButton">Pause</button>
+                    <button class="button primary" id="exportButton">Stop &amp; download</button>
+                </div>
+            </section>
+            <div id="downloadReady" class="download-ready" hidden>
+                <span>Your recording ZIP is ready.</span>
+                <a id="saveRecording" download>Save recording ZIP</a>
+            </div>
+            <div class="tabs-row">
+                <div role="tablist" aria-label="Monitor views">
+                    <button role="tab" aria-selected="true" aria-controls="carePanel" id="careTab" tabindex="0">Care</button>
+                    <button role="tab" aria-selected="false" aria-controls="experimentPanel" id="experimentTab" tabindex="-1">Experiment</button>
+                </div>
+                <span class="session-note">
+                    <span class="record-dot" id="recordDot"></span>
+                    <span id="sessionState">Recording demo</span>
+                </span>
+            </div>
+            <section id="carePanel" role="tabpanel" aria-labelledby="careTab">
+                <div class="care-grid">
+                    <article class="card moisture-card">
+                        <div class="card-top">
+                            <h2>Soil moisture</h2>
+                            <span class="small-tag" id="calibrationBadge">DEMO CALIBRATION</span>
+                        </div>
+                        <div class="moisture-reading">
+                            <span id="moistureValue">44</span>
+                            <span class="percent">%</span>
+                            <svg viewBox="0 0 64 72" class="drop" aria-hidden="true">
+                                <path d="M32 5C24 19 9 33 9 46a23 23 0 0 0 46 0C55 33 40 19 32 5Z"/>
+                                <path class="drop-shine" d="M20 43c-3 8 1 14 7 17"/>
+                            </svg>
+                        </div>
+                        <p class="reading-caption">Relative wetness index</p>
+                        <div class="moisture-scale" aria-hidden="true">
+                            <span id="moistureMarker"></span>
+                        </div>
+                        <div class="scale-labels">
+                            <span>Dry reference</span>
+                            <span>Wet reference</span>
+                        </div>
+                        <div class="care-status" id="careStatus">Within the set range</div>
+                        <p class="card-explainer" id="careExplanation">Not a measured water-content percentage. Check the soil before acting on a notice.</p>
+                        <div class="progress-track" aria-hidden="true">
+                            <span id="dryProgress"></span>
+                        </div>
+                        <p class="tiny" id="dryTimer">Dry-soil demo notice: below 25% for 6 seconds.</p>
+                    </article>
+                    <article class="card signal-card">
+                        <div class="card-top">
+                            <h2>Electrical trace</h2>
+                            <span class="trace-value">
+                                <span id="adcValue">—</span>
+                                <span>ADC</span>
+                            </span>
+                        </div>
+                        <p class="muted">Raw amplifier output · last 15 seconds</p>
+                        <div class="chart-wrap">
+                            <canvas id="careChart" role="img" aria-label="Electrical signal chart, in raw ADC counts"></canvas>
+                            <span class="chart-wait" id="chartWait">Waiting for readings</span>
+                        </div>
+                        <div class="chart-caption">
+                            <span>
+                                <i class="line-swatch"></i>
+                                <span id="traceSource">Artificial trace</span>
+                            </span>
+                            <span>Auto-scaled · 0–1023 ADC</span>
+                        </div>
+                        <p class="signal-note">A change in the trace does not tell us its cause. Touch, cable movement and electrical interference need separate controls.</p>
+                    </article>
+                    <article class="card notice-card">
+                        <div class="card-top">
+                            <h2>Monitor notices</h2>
+                            <span class="small-tag" id="noticeCount">0 NEW</span>
+                        </div>
+                        <div id="noticeList" class="notice-list">
+                            <p class="empty">Your notices will appear here.</p>
+                        </div>
+                        <button class="text-button" id="alertsButton">Enable desktop alerts</button>
+                        <p class="tiny" id="alertsHint">In-app notices work now. Optional desktop alerts require permission and an open, active page.</p>
+                    </article>
+                </div>
+                <section class="demo-strip" id="demoControls" aria-labelledby="demoTitle">
+                    <div>
+                        <span class="eyebrow">TRY IT BEFORE YOUR PARTS ARRIVE</span>
+                        <h2 id="demoTitle">Give the demo a little nudge.</h2>
+                        <p>These buttons change artificial readings only.</p>
+                    </div>
+                    <div class="demo-buttons">
+                        <button class="button outline" id="dryButton">Dry soil</button>
+                        <button class="button outline" id="waterButton">Water</button>
+                        <button class="button outline" id="signalButton">Signal example</button>
+                        <button class="text-button" id="normalButton">Reset normal</button>
+                    </div>
+                    <label class="check-label">
+                        <input type="checkbox" id="quickTimers" checked>Short demo timers
+                    </label>
+                </section>
+            </section>
+            <section id="experimentPanel" role="tabpanel" aria-labelledby="experimentTab" hidden>
+                <div class="experiment-grid">
+                    <article class="card capture-card">
+                        <div class="card-top">
+                            <h2>Capture an experiment</h2>
+                            <span class="small-tag">5 s BEFORE · 10 s AFTER</span>
+                        </div>
+                        <p class="muted">The label records what you did. It does not prove what caused a signal.</p>
+                        <div class="chart-wrap experiment-chart">
+                            <canvas id="experimentChart" role="img" aria-label="Experiment electrical signal chart in raw ADC counts"></canvas>
+                        </div>
+                        <div class="trial-status">
+                            <strong id="trialStatus">Building baseline…</strong>
+                            <span id="trialProgress">Wait for 5 seconds of uninterrupted readings.</span>
+                        </div>
+                        <div class="trial-buttons">
+                            <button class="button primary" id="touchButton">Mark touch</button>
+                            <button class="button outline" id="shamButton">Mark sham</button>
+                        </div>
+                        <p class="tiny">Touch: click the marker, then gently touch once. Sham: click the marker and leave the plant untouched. In demo mode, Touch adds an artificial peak.</p>
+                    </article>
+                    <div class="experiment-side">
+                        <article class="card ai-card">
+                            <span class="eyebrow">THE NEXT STAGE</span>
+                            <h2>Learning starts with real data.</h2>
+                            <p>This prototype records experiments. A trained AI model will come after the real recordings and control tests.</p>
+                            <dl class="model-stats">
+                                <div>
+                                    <dt>Model status</dt>
+                                    <dd>Awaiting real recordings</dd>
+                                </div>
+                                <div>
+                                    <dt>Accuracy</dt>
+                                    <dd>Not evaluated</dd>
+                                </div>
+                                <div>
+                                    <dt>Real touch / sham trials</dt>
+                                    <dd id="realTrialCount">0 / 0</dd>
+                                </div>
+                            </dl>
+                            <p class="tiny">Counts cover completed USB trials in this session. Demo trials are excluded.</p>
+                        </article>
+                        <article class="card">
+                            <div class="card-top">
+                                <h2>Session details</h2>
+                                <span class="small-tag" id="sessionSource">SIMULATED</span>
+                            </div>
+                            <dl class="session-stats">
+                                <div>
+                                    <dt>Recorded samples</dt>
+                                    <dd id="sampleCount">0</dd>
+                                </div>
+                                <div>
+                                    <dt>Elapsed</dt>
+                                    <dd id="sessionTime">00:00</dd>
+                                </div>
+                                <div>
+                                    <dt>Recent sample rate</dt>
+                                    <dd id="sampleRate">—</dd>
+                                </div>
+                                <div>
+                                    <dt>Rejected serial lines</dt>
+                                    <dd id="rejectedCount">0</dd>
+                                </div>
+                            </dl>
+                        </article>
+                    </div>
+                    <article class="card trial-log">
+                        <div class="card-top">
+                            <h2>Trial journal</h2>
+                            <span class="muted">Current session</span>
+                        </div>
+                        <div class="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Label</th>
+                                        <th>Source</th>
+                                        <th>State</th>
+                                        <th>Samples</th>
+                                        <th>Marked at</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trialRows">
+                                    <tr>
+                                        <td colspan="5" class="empty">No trials yet. Start with a baseline, then mark an action.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+            </section>
+            <footer class="footer">
+                <div>
+                    <span id="backupStatus">Preparing local backup…</span>
+                    <span class="footer-separator">·</span>
+                    <button class="text-button" id="recordingsButton">Previous recordings</button>
+                </div>
+                <p>Keep this tab visible and your Mac awake. Hiding the page pauses the session.</p>
+                <span>SCIENCE FAIR PROTOTYPE · v0.2</span>
+            </footer>
+            <p class="message" id="message" role="status" aria-live="polite" hidden></p>
+        </main>
+        <dialog id="settingsDialog" aria-labelledby="settingsTitle">
+            <form id="settingsForm">
+                <div class="dialog-head">
+                    <h2 id="settingsTitle">Plant &amp; calibration</h2>
+                    <button class="icon-button" type="button" data-close="settingsDialog" aria-label="Close settings">×</button>
+                </div>
+                <label class="field">
+                    Plant name<input id="plantName" maxlength="40" value="Mimosa" required>
+                </label>
+                <p>Real USB readings use your plant’s calibration. Demo readings use fixed artificial references.</p>
+                <div class="field-pair">
+                    <label class="field">
+                        Dry reference (ADC)<input type="number" min="0" max="1023" step="1" id="dryReference" placeholder="Not set">
+                    </label>
+                    <label class="field">
+                        Wet reference (ADC)<input type="number" min="0" max="1023" step="1" id="wetReference" placeholder="Not set">
+                    </label>
+                </div>
+                <p class="tiny" id="latestMoisture">Latest raw moisture reading: —</p>
+                <p class="tiny">Use references from the same sensor and pot. They must differ by at least 50 ADC counts. The index is relative, not an absolute soil-water percentage.</p>
+                <p class="form-error" id="settingsError" role="alert"></p>
+                <p class="tiny">Saving changes ends the current session and starts a fresh one if monitoring is running.</p>
+                <div class="dialog-actions">
+                    <button type="button" class="button outline" data-close="settingsDialog">Cancel</button>
+                    <button class="button primary" type="submit">Save settings</button>
+                </div>
+            </form>
+        </dialog>
+        <dialog id="helpDialog" aria-labelledby="helpTitle">
+            <div class="dialog-head">
+                <h2 id="helpTitle">Start with the demo.</h2>
+                <button class="icon-button" data-close="helpDialog" aria-label="Close guide">×</button>
+            </div>
+            <ol class="help-list">
+                <li>
+                    <strong>Try a care notice.</strong>
+                    Click Dry soil and wait about 6 seconds. Click Water and wait about 3 seconds for a separate notice.
+                </li>
+                <li>
+                    <strong>Explore a signal.</strong>
+                    Signal example adds an artificial peak and a demo notice. This is a manual simulation.
+                </li>
+                <li>
+                    <strong>Record a trial.</strong>
+                    Open Experiment. After 5 seconds of baseline, mark Touch or Sham, then wait 10 seconds.
+                </li>
+                <li>
+                    <strong>Keep the evidence.</strong>
+                    Stop &amp;download saves a ZIP with samples, events, calibration and labelled trial files.
+                </li>
+            </ol>
+            <div class="help-box">
+                <h3>When the hardware arrives</h3>
+                <p>Open the hosted app in desktop Chrome on your Mac, upload the matching board firmware, then choose Connect USB and grant access to your board. Real board compatibility and signal quality still need testing.</p>
+                <p>USB always uses full timers: 120 seconds for dry soil and 30 seconds for a sustained moisture rise. Calibrate before relying on care notices.</p>
+            </div>
+            <p class="tiny">This version provides in-app notices and optional desktop alerts while the page is open. Phone push notifications, background monitoring and a trained AI model are later work.</p>
+            <div class="dialog-actions">
+                <button class="button primary" data-close="helpDialog">Got it</button>
+            </div>
+        </dialog>
+        <dialog id="recordingsDialog" aria-labelledby="recordingsTitle">
+            <div class="dialog-head">
+                <h2 id="recordingsTitle">Previous recordings</h2>
+                <button class="icon-button" data-close="recordingsDialog" aria-label="Close recordings">×</button>
+            </div>
+            <p>Backups stay in this browser on this device. Download important sessions as ZIP files.</p>
+            <div id="recordingList" class="recording-list"></div>
+            <p class="tiny">A recovered backup may end early. Incomplete trials are exported as interrupted.</p>
+        </dialog>
+        <noscript>
+            <p class="noscript">Please enable JavaScript to run the monitor.</p>
+        </noscript>
+    </body>
+</html>
